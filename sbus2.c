@@ -1,19 +1,13 @@
-#include <stdio.h>
-#include <stdbool.h>
-#include "pico/stdlib.h"
-#include "hardware/uart.h"
-#include "hardware/irq.h"
+#include "sbus2.h"
 
-// ----- SBUS DEFINES -----
-#define SBUS_BAUDRATE     100000     // Standard SBUS baud rate
-#define SBUS_FRAME_SIZE   25         // Bytes per SBUS frame
-#define SBUS_START_BYTE   0x0F       // Start-of-frame indicator
-#define SBUS_END_BYTE     0x00       // End-of-frame indicator
+
 
 // ----- CIRCULAR BUFFER -----
 static volatile uint8_t rx_buffer[64];
 static volatile uint8_t rx_head = 0;
 static volatile uint8_t rx_tail = 0;
+
+static volatile uint8_t ch1val = 0;
 
 void on_uart_rx(void);
 
@@ -133,6 +127,7 @@ void process_sbus_data() {
                 for (int ch = 0; ch < 16; ch++) {
                     uint16_t val = sbus_get_channel(frame, ch);
                     printf("Channel %d: %u\n", ch + 1, val);
+                    ch1val = val;
                 }
             } else {
                 printf("[ERROR] Invalid SBUS frame\n");
@@ -142,3 +137,5 @@ void process_sbus_data() {
         // (Could add a sleep_ms(1) or so if needed)
     }
 }
+
+
