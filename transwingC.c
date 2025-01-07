@@ -18,8 +18,11 @@ int main(){
 
     // initialize sbus on tx pin 2, rx pin 1 (adjust pins as needed)
     sbus_init(0, 1);
+    while(true){
+    sleep_ms(1000);
+    printf("Channel 1 value = %d\n", channels[0]);
+    }
 
-
-    process_sbus_data();
+    
     return 0;
 }

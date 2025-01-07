@@ -23,5 +23,7 @@ uint16_t sbus_get_channel(const uint8_t *frame, uint8_t channel_index);
 void process_sbus_data(void);
 float channel1();
 
+static uint16_t channels[16];
+
 
 #endif
