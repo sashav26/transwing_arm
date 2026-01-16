@@ -13,6 +13,7 @@ add_executable(transwingC
     transwingC.c
     servo.c
     sbus2.c
+    led.c
 )
 
 # Include the current directory for headers

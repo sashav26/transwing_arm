@@ -1,33 +1,12 @@
 // servo.c
 
 #include "servo.h"
-
+#include "led.h"
+#include "config.h"
 
 /* Internal Variables */
 static float clockDiv = 64.0f;
 static float wrap = 39062.0f;
-
-/* LED Pin Definition */
-#define LED_PIN 25  // Change if using a different GPIO for the onboard LED
-
-/* SBUS Configuration */
-#define SBUS_UART_ID uart0      // Using UART1
-#define SBUS_BAUD_RATE 100000  // 100 kbps for SBUS
-#define SBUS_DATA_BITS 8
-#define SBUS_PARITY UART_PARITY_EVEN
-#define SBUS_STOP_BITS 2
-
-/* SBUS Frame Constants */
-#define SBUS_START_BYTE 0x0F
-#define SBUS_FRAME_SIZE 25
-
-/* Function Prototypes */
-void initLED();
-void blinkLED();
-
-/* SBUS Frame Buffer */
-static uint8_t sbus_buffer[SBUS_FRAME_SIZE];
-static int sbus_buffer_index = 0;
 
 /**
  * @brief Initializes the PWM settings and the onboard LED.
@@ -45,14 +24,14 @@ void initServo(int servoPin, float startPulseWidth_us)
 
     uint64_t clockspeed = clock_get_hz(clk_sys); // Use system clock
     clockDiv = 64.0f;
-    wrap = clockspeed / clockDiv / 50.0f; // 50Hz for servo
+    wrap = clockspeed / clockDiv / SERVO_FREQ_HZ;
 
     // Adjust clockDiv to ensure wrap fits within 16-bit limit
-    while ((clockspeed / clockDiv / 50) > 65535.0f && clockDiv < 256.0f)
+    while ((clockspeed / clockDiv / SERVO_FREQ_HZ) > 65535.0f && clockDiv < 256.0f)
     {
         clockDiv += 64.0f;
     }
-    wrap = clockspeed / clockDiv / 50.0f;
+    wrap = clockspeed / clockDiv / SERVO_FREQ_HZ;
 
     // Debug: Print clockDiv and wrap values
     printf("Initializing Servo:\n");
@@ -80,10 +59,10 @@ void initServo(int servoPin, float startPulseWidth_us)
 void setPulseWidth(int servoPin, float pulseWidth_us)
 {
     // Ensure pulseWidth_us is within typical servo range
-    if (pulseWidth_us < 1000.0f)
-        pulseWidth_us = 1000.0f;
-    if (pulseWidth_us > 2000.0f)
-        pulseWidth_us = 2000.0f;
+    if (pulseWidth_us < SERVO_MIN_US)
+        pulseWidth_us = SERVO_MIN_US;
+    if (pulseWidth_us > SERVO_MAX_US)
+        pulseWidth_us = SERVO_MAX_US;
 
     // Calculate the PWM level based on pulse width
     uint level = (pulseWidth_us / 20000.0f) * wrap;
@@ -95,33 +74,4 @@ void setPulseWidth(int servoPin, float pulseWidth_us)
 
     // Blink the LED to indicate servo movement
     blinkLED();
-}
-
-/**
- * @brief Initializes the onboard LED.
- */
-void initLED()
-{
-    // Initialize the LED pin
-    gpio_init(LED_PIN);
-    gpio_set_dir(LED_PIN, GPIO_OUT);
-    gpio_put(LED_PIN, 0); // Turn off LED initially
-
-    // Debug: Print LED initialization status
-    printf("LED initialized on GPIO %d.\n", LED_PIN);
-}
-
-/**
- * @brief Toggles the onboard LED state.
- *
- * This function turns the LED on if it's off, and vice versa.
- */
-void blinkLED()
-{
-    static bool led_state = false;
-    led_state = !led_state;
-    gpio_put(LED_PIN, led_state);
-
-    // Debug: Print LED state
-    printf("LED is now %s.\n", led_state ? "ON" : "OFF");
 }
